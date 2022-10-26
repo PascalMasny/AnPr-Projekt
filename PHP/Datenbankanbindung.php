@@ -26,6 +26,7 @@
         FROM Product WHERE gewicht >= ? ORDER BY gewicht LIMIT 10"
         );
 
+
     if ($stmt->execute(array(100))) {
         while ($row = $stmt->fetch()) {
             echo $row["Name"] ."|" .$row["ModelNumber"]."|" .$row["gewicht"]."|" .$row["groesse"] ."<br/>";
