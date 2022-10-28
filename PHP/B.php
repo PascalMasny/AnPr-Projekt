@@ -2,63 +2,53 @@
 
 function readDb($postData) {
 
-if (isset($postData["minweight"])) {
+    if (isset($postData["minweight"])) {
 
-$dbh = new PDO('mysql:host=localhost:3306;dbname=warpshop',
+    $dbh = new PDO('mysql:host=localhost:3306;dbname=warpshop', 'root', 'usbw');
 
-'root', 'usbw');
+    $stmt = $dbh->prepare("SELECT Name, ModelNumber, gewicht, groesse
+                                FROM Product WHERE gewicht >= ? ORDER BY gewicht LIMIT 10");
 
-$stmt = $dbh->prepare("SELECT Name, ModelNumber, gewicht, groesse
+    if ($stmt->execute(array($postData["minweight"]))) {
 
-FROM Product WHERE gewicht >= ? ORDER BY gewicht LIMIT 10");
+        while ($row = $stmt->fetch()) {
 
-if ($stmt->execute(array($postData["minweight"]))) {
+            echo $row["Name"] ."|" .$row["ModelNumber"]."|" .$row["gewicht"]."|" .$row["groesse"] ."<br/>";
+        }
 
-while ($row = $stmt->fetch()) {
+    }
 
-echo $row["Name"] ."|" .$row["ModelNumber"]."|" .$row["gewicht"]
+    $stmt = null;
+    $dbh = null;
 
-."|" .$row["groesse"] ."<br/>";
+    }
 
-}
+} 
 
-}
-
-$stmt = null;
-
-$dbh = null;
-
-}
-
-} ?>
+?>
 
 <!DOCTYPE html>
 
 <html lang="de">
 
 <head>
-
-<meta charset="utf-8" />
-
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-
-<title>PHP und HTML</title>
-
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>PHP und HTML</title>
 </head>
 
 <body>
 
-<form action="SeiteB.php" method="post">
+    <form action="SeiteB.php" method="post">
 
-Minimalgewicht: <input type="text" name="minweight">
+    Minimalgewicht: <input type="text" name="minweight">
+    <input type="submit" value="send">
 
-<input type="submit" value="send">
+    </form>
 
-</form>
+    <br/>
 
-<br/>
-
-<?php readDb($_POST); ?>
+    <?php readDb($_POST); ?>
 
 </body>
 
