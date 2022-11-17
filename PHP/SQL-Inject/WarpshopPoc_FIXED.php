@@ -14,67 +14,64 @@ function getPriceTo() {
   return isset($_POST[PRICE_TO_KEY]) ? $_POST[PRICE_TO_KEY] : (isset($_GET[PRICE_TO_KEY]) ? $_GET[PRICE_TO_KEY] : "");
 }
 
- function getSelectBody() {
-//   $priceFrom = getPriceFrom();
-//   $priceTo = getPriceTo();
+function getParamArray() {
+  $paramArray = array(
+    ':paramEins' => getPriceFrom(),
+    ':paramZwei' => getPriceTo()
+  );
 
-//   if ($priceFrom == "" || $priceTo == "") {
-//     return "";
-//   }
-
-//   return "FROM product pd " 
-//     ."JOIN prodpricefromtomat pr ON pr.ProductID = pd.ID "
-//     ."WHERE pr.fromDate <= DATE(NOW()) "
-//     ."AND pr.toDate > DATE(NOW()) "
-//     ."AND pr.Price >= $priceFrom "
-//     ."AND pr.Price <= $priceTo ";
-  $query = "FROM product pd " 
-    ."JOIN prodpricefromtomat pr ON pr.ProductID = pd.ID "
-    ."WHERE pr.fromDate <= DATE(NOW()) "
-    ."AND pr.toDate > DATE(NOW()) "
-    ."AND pr.Price >= :paramEins "
-    ."AND pr.Price <= :paramZwei ";
-  
-    return $query;
- }
-
-
-
-  function getParamArray() {
-    $paramArray = array(
-      ':paramEins' => getPriceFrom(),
-      ':paramZwei' => getPriceTo()
-    );
-  
-    if ($paramArray[':paramEins'] == "" || $paramArray[':paramZwei'] == "") {
-      return array();
-    }
-
-    return $paramArray;
+  if ($paramArray[':paramEins'] == "" || $paramArray[':paramZwei'] == "") {
+    return array();
   }
+
+  return $paramArray;
+
+}
+
+function getQuery() {
+  return "FROM product pd " 
+  ."JOIN prodpricefromtomat pr ON pr.ProductID = pd.ID "
+  ."WHERE pr.fromDate <= DATE(NOW()) "
+  ."AND pr.toDate > DATE(NOW()) "
+  ."AND pr.Price >= :paramEins "
+  ."AND pr.Price <= :paramZwei ";
+}
 
 function getLinkData() {
   $linkData = array();
 
-  $selectBody = getSelectBody();
+  //$selectBody = getSelectBody();
   $noOfDataSets = 0;
+  $paramArray = getParamArray();
+  if(empty($paramArray))
+  {
+    return 0;
+  }
+  $query = getQuery();
+  
 	
-  if ($selectBody == "") {
+
+  if ($query == "") {
     $linkData;
   }
 	
   try {
-    $dbh = new PDO('mysql:host=localhost;dbname=warpshop', USER, PASS, array(PDO::MYSQL_ATTR_INIT_COMMAND => "SET NAMES utf8"));
+    $dbh = new PDO('mysql:host=localhost;dbname=warpshop', USER, PASS, array(PDO::MYSQL_ATTR_INIT_COMMAND => "SET NAMES utf8"));	
+    $stmt = $dbh->prepare("SELECT COUNT(*) AS numSets " .$query);
+    $stmt->execute($paramArray);
 
-    //sicherer aber immernoch schnelcht. 
-    $stmt = $dbh->prepare("SELECT COUNT(*) AS numSets " .$selectBody);
-    $sth->$stmt->execute(getParamArray());
-
-    //unsicher!
+    if($stmt !== true)
+    {
+      return 0;
+    }
+    /*$stmt->bindParam(':paramEins', getPriceFrom() );
+    $stmt->bindParam(':paramZwei', getPriceTo() );
+    $sth = $dbh->query($stmt);*/
+    
     //$sth = $dbh->query("SELECT COUNT(*) AS numSets " .$selectBody);
 				
-    if ($sth !== false) {
-      foreach ($sth->fetchAll(PDO::FETCH_ASSOC) as $row) {
+    if ($stmt !== true) {
+      foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $row) {
         $noOfDataSets = intval($row["numSets"]);
       }
     } else {
@@ -96,43 +93,43 @@ function getLinkData() {
 
 function getTableContent() {
   $selectData = array();
-  $startValue = (isset($_GET[START_FROM_KEY]) && is_numeric($_GET[START_FROM_KEY])) ? $_GET[START_FROM_KEY] : 0;
+  $startValue = isset($_GET[START_FROM_KEY]) && is_numeric($_GET[START_FROM_KEY]) ? $_GET[START_FROM_KEY] : 0;
   $outputSize = DATASET_SIZE;
-  $selectBody = getSelectBody();
-  if(isEmpty(getParamArray()))
-  {
-    return 0;
-  }
+  $query = getQuery();
+  $paramArray = getParamArray();
+  //$selectBody = getSelectBody();
 	
-  if ($selectBody == "") {
+  /*if ($selectBody == "") {
     return $selectData;
-  }
+  }*/
 	
   try {
+    $dbh = new PDO('mysql:host=localhost;dbname=warpshop', USER, PASS, array(PDO::MYSQL_ATTR_INIT_COMMAND => "SET NAMES utf8"));
 
-    $dbh = new PDO('mysql:host=localhost;dbname=warpshop', USER, PASS, array(PDO::MYSQL_ATTR_INIT_COMMAND => "SET NAMES utf8"));  
-    $stmt = $dbh->prepare("SELECT COUNT(*) AS numSets " .$selectBody);
+    $sqlStatement = "SELECT pd.ModelNumber, pd.Name, pr.Price "
+                    .$query ."LIMIT $startValue, $outputSize";
+
+    $stmt = $dbh->prepare($sqlStatement);
+    
+    $stmt->execute($paramArray);
+
+    /*
+    $stmt->bindParam(':paramEins', getPriceFrom() );
+    $stmt->bindParam(':paramZwei', getPriceTo() );
+    $sth = $dbh->query($stmt);*/
     
 
-
-    //var_dump(getParamArray()); debuggingexperten 
-    $sth = $stmt->execute(getParamArray());
-
-    //schlecht
-    //$sth = $dbh->query("SELECT COUNT(*) AS numSets " .$selectBody);
-
-    if ($sth !== false) {
-      foreach ($sth->fetchAll(PDO::FETCH_ASSOC) as $row) {
-        $noOfDataSets = intval($row["numSets"]);
+    if ($stmt !== true) {
+      $noData = 0;
+      foreach ($stmt->fetchAll(PDO::FETCH_NUM) as $row) {
+        $selectData[$noData++] = $row;
       }
-
     } else {
-      return $linkData;
+      return $selectData;
     }
-
   } catch (Exception $e) {
-    echo $e->getMessage();
-  }
+	  	  echo $e->getMessage();
+  }	
 
   $sth = null;
   $dbh = null;
@@ -171,7 +168,7 @@ function showLinkData() {
   <title>warshop proof of concept</title>
  </head>
  <body>
-	<form action="WarpshopPoc.php" method="post">
+	<form action="WarpshopPog.php" method="post">
 		Preis von: <input type="text" name="<?php echo PRICE_FROM_KEY; ?>"/><br/>
 		Preis bis: <input type="text" name="<?php echo PRICE_TO_KEY; ?>"/><br/>
 		<input type="submit" value="send"/>
