@@ -1,10 +1,21 @@
 const express = require('express');
 const app = express();
 const EXP_PORT = 8080;
+const rateLimit = require("express-rate-limit");
+const myMw = require("./myMw")
 
+//Seitenaufruf
 app.use(express.static('public'));
 app.use(express.urlencoded({extendet: true}));
 
+
+//Ratelimiter
+const limiter = rateLimit({
+    windowMs: 60 * 1000, // Zeitintervall: 1 Minute
+    max: 2, // Maximal 2 Anfragen von einer IP innerhalb Zeitintervall
+    message: "Zu viele Anfragen pro Zeit!"
+});
+app.use(limiter)
 
 
 //02 Aufagbe 2
@@ -54,6 +65,20 @@ app.use(express.urlencoded());
 app.post('/addnum', function (req, res, next) {
     res.send("Solution: " +(parseInt(req.body.num1) + parseInt(req.body.num2)));
 });
+
+
+//03 Aufgabe 1
+app.get("/api/eins", (req, res, next) => {
+    res.send("eins");
+}) //=> geht
+
+app.get("/api/zwei", (req, res, next) => {
+    res.send("zwei");
+}) //=> geht
+
+app.get("/test", (req, res, next) => {
+    res.send("test");
+})//=> blocked
 
 
 
