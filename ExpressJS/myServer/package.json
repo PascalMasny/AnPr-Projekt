@@ -1,0 +1,15 @@
+{
+  "name": "myserver",
+  "version": "1.0.0",
+  "description": "My first Exress App",
+  "main": "app.js",
+  "scripts": {
+    "test": "node app.js"
+  },
+  "author": "Passi",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.18.2"
+  }
+  
+}
