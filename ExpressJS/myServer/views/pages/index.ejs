@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="de">
+
+<%- include("../partials/header", {hVersion: version}) %>
+
+<body>
+
+    Hallo, <%= planet %>!
+
+    <% if(planet == "Welt") { %>
+
+    <p>Be down to earth</p>
+
+    <% } else { %>
+
+    <p>Fly to space</p>
+
+    <% } %>
+
+</body>
+</html>
